@@ -46,7 +46,7 @@ All game logic is server-authoritative. Clients send actions; the server validat
   "dealer_position": 0,
   "current_position": 2,
   "current_bet": 20,
-  "min_raise": 40,
+  "min_raise": 20,
   "pot": 30,
   "community_cards": ["Kh", "7s", "2d"],
   "last_action": { "player": "Alice", "action": "raise", "amount": 40 },
@@ -152,7 +152,7 @@ any street ──(all but one fold)──► hand_over
 | Starting stack | $1,000 |
 | Small blind | $10 |
 | Big blind | $20 |
-| Min raise | 2× current bet |
+| Min raise | size of the previous raise increment (e.g. if someone bets $20 and is raised to $60, the next min raise is $40 more → $100 total) |
 
 These are constants for the initial implementation. Configurable per-table is a future concern.
 
