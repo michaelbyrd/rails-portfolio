@@ -1,0 +1,93 @@
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #f9fafb;
+    color: #111827;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4rem 1.5rem;
+    gap: 3rem;
+  }
+
+  .header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    text-align: center;
+  }
+
+  .header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #111827;
+    letter-spacing: -0.02em;
+  }
+
+  .header p {
+    font-size: 0.9rem;
+    color: #6b7280;
+  }
+
+  .chapter-list {
+    width: 100%;
+    max-width: 560px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .chapter-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.875rem 1rem;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .chapter-row:hover {
+    border-color: #6366f1;
+    box-shadow: 0 1px 4px rgba(99,102,241,0.08);
+  }
+
+  .chapter-number {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #9ca3af;
+    min-width: 2.5rem;
+  }
+
+  .chapter-title {
+    flex: 1;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #111827;
+  }
+
+  .chapter-count {
+    font-size: 0.75rem;
+    color: #9ca3af;
+  }
+</style>
+
+<div class="header">
+  <h1>Cracking the Coding Interview</h1>
+  <p>Solutions in Python and Ruby, organized by chapter.</p>
+</div>
+
+<div class="chapter-list">
+  <% @chapters.each do |chapter| %>
+    <%= link_to ctci_chapter_path(chapter[:chapter]), class: 'chapter-row' do %>
+      <span class="chapter-number">Ch. <%= chapter[:chapter] %></span>
+      <span class="chapter-title"><%= chapter[:title] %></span>
+      <span class="chapter-count"><%= chapter[:problems].count %> problems</span>
+    <% end %>
+  <% end %>
+</div>

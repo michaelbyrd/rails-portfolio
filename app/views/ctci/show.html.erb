@@ -1,0 +1,133 @@
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #f9fafb;
+    color: #111827;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4rem 1.5rem;
+    gap: 2.5rem;
+  }
+
+  .page-header {
+    width: 100%;
+    max-width: 740px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .back-link {
+    font-size: 0.8rem;
+    color: #6b7280;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-bottom: 0.25rem;
+  }
+  .back-link:hover { color: #111827; }
+
+  .page-header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111827;
+    letter-spacing: -0.02em;
+  }
+
+  .page-header .blurb {
+    font-size: 0.9rem;
+    color: #6b7280;
+    line-height: 1.65;
+    max-width: 600px;
+    margin-top: 0.25rem;
+  }
+
+  .problem-list {
+    width: 100%;
+    max-width: 740px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .problem {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    padding: 2rem 0;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  .problem:first-child { padding-top: 0; }
+  .problem:last-child { border-bottom: none; }
+
+  .problem-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.625rem;
+  }
+
+  .problem-number {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #9ca3af;
+    min-width: 2.5rem;
+  }
+
+  .problem-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #111827;
+    flex: 1;
+  }
+
+  .problem-github {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    text-decoration: none;
+  }
+  .problem-github:hover { color: #6366f1; }
+
+  pre {
+    margin: 0;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 0.8rem;
+    line-height: 1.6;
+    border: 1px solid #e5e7eb;
+  }
+
+  pre code.hljs {
+    border-radius: 8px;
+    padding: 1.125rem 1.25rem;
+    background: #fff;
+  }
+</style>
+
+<div class="page-header">
+  <%= link_to '← All chapters', ctci_path, class: 'back-link' %>
+  <h1>Chapter <%= @chapter[:chapter] %> &mdash; <%= @chapter[:title] %></h1>
+  <% if @chapter[:blurb].present? %>
+    <p class="blurb"><%= @chapter[:blurb] %></p>
+  <% end %>
+</div>
+
+<div class="problem-list">
+  <% @chapter[:problems].each do |problem| %>
+    <div class="problem">
+      <div class="problem-header">
+        <span class="problem-number"><%= problem[:number] %></span>
+        <span class="problem-title"><%= problem[:title] %></span>
+        <% if problem[:github_path].present? %>
+          <%= link_to 'View on GitHub →', "#{@github_base}/#{problem[:github_path]}", class: 'problem-github', target: '_blank', rel: 'noopener' %>
+        <% end %>
+      </div>
+
+      <pre><code class="language-<%= problem[:language] %>"><%= problem[:content] %></code></pre>
+    </div>
+  <% end %>
+</div>

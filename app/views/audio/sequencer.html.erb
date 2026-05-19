@@ -1,0 +1,364 @@
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* ── Design tokens — change these to resize the whole grid ── */
+  :root {
+    --cell: 30px;
+    --gap:  3px;
+    --marker-h: 19px;
+  }
+
+  @media (max-width: 560px) {
+    :root {
+      --cell: 18px;
+      --gap:  2px;
+      --marker-h: 14px;
+    }
+  }
+
+  body {
+    background: #111827;
+    color: #e5e7eb;
+    font-family: 'Courier New', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem;
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 560px) {
+    body { padding: 1rem 0.5rem; gap: 1rem; }
+  }
+
+  h1 {
+    font-size: 1.25rem;
+    letter-spacing: 0.25em;
+    color: #9ca3af;
+    text-transform: uppercase;
+  }
+
+  /* ── Controls ── */
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 2rem;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 560px;
+  }
+
+  @media (max-width: 560px) {
+    .controls { gap: 0.6rem 1rem; }
+  }
+
+  .control-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: #9ca3af;
+  }
+
+  .control-group span.val {
+    color: #e5e7eb;
+    min-width: 3ch;
+  }
+
+  button {
+    padding: 0.45rem 1.25rem;
+    border: none;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    touch-action: manipulation; /* eliminates 300ms tap delay on mobile */
+    transition: background 0.1s, transform 0.05s;
+  }
+  button:active { transform: scale(0.96); }
+
+  [data-sequencer-target="playBtn"] {
+    background: #10b981;
+    color: #fff;
+    min-width: 5rem;
+  }
+  [data-sequencer-target="playBtn"].playing { background: #ef4444; }
+  [data-sequencer-target="playBtn"]:hover { filter: brightness(1.15); }
+
+  .clear-btn { background: #374151; color: #9ca3af; }
+  .clear-btn:hover { background: #4b5563; }
+
+  input[type=range] {
+    cursor: pointer;
+    accent-color: #6366f1;
+    width: 90px;
+    touch-action: manipulation;
+  }
+
+  @media (max-width: 560px) {
+    input[type=range] { width: 70px; }
+  }
+
+  select {
+    background: #1f2937;
+    color: #e5e7eb;
+    border: 1px solid #374151;
+    padding: 0.25rem 0.4rem;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  /* ── Sequencer layout ── */
+  .sequencer-scroll {
+    overflow-x: auto;
+    width: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sequencer {
+    display: flex;
+    gap: 6px;
+    align-items: flex-start;
+    /* keeps the sequencer at its natural width inside the scroll container */
+    width: max-content;
+    margin: 0 auto;
+  }
+
+  .note-labels {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
+    padding-top: calc(var(--marker-h) + var(--gap));
+    width: 2.4rem;   /* fixed so KICK label doesn't push perc grid out of alignment */
+    flex-shrink: 0;
+  }
+
+  .note-label {
+    height: var(--cell);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    font-size: 0.7rem;
+    padding-right: 4px;
+    color: #6b7280;
+    user-select: none;
+  }
+
+  @media (max-width: 560px) {
+    .note-label { font-size: 0.55rem; padding-right: 2px; }
+  }
+
+  .note-label.natural { color: #9ca3af; }
+
+  .grid-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
+  }
+
+  .beat-markers {
+    display: grid;
+    grid-template-columns: repeat(16, var(--cell));
+    gap: var(--gap);
+    height: var(--marker-h);
+  }
+
+  .beat-marker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    color: #374151;
+  }
+  .beat-marker.bar-start { color: #6b7280; font-weight: bold; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(16, var(--cell));
+    grid-template-rows: repeat(12, var(--cell));
+    gap: var(--gap);
+  }
+
+  .cell {
+    border-radius: 3px;
+    cursor: pointer;
+    background: #1f2937;
+    border: 1px solid #374151;
+    transition: background 0.05s;
+    touch-action: manipulation;
+    user-select: none;
+  }
+  .cell:hover { border-color: #6b7280; }
+  .cell.on { background: #6366f1; border-color: #818cf8; }
+  .cell.head { border-color: #6b7280; background: #1f3a50; }
+  .cell.on.head { background: #38bdf8; border-color: #7dd3fc; }
+
+  .cell[data-step="4"],
+  .cell[data-step="8"],
+  .cell[data-step="12"] { margin-left: 2px; }
+
+  .add-kick-btn { background: #92400e; color: #fde68a; }
+  .add-kick-btn:hover { background: #b45309; }
+  .add-kick-btn.active { background: #78350f; color: #6b7280; cursor: default; }
+
+  .perc-section {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #374151;
+  }
+
+  .perc-sequencer .note-labels { padding-top: 0; }
+
+  .perc-grid { grid-template-rows: var(--cell) !important; }
+  .perc-label { color: #fbbf24 !important; }
+
+  .perc-grid .cell.on { background: #b45309; border-color: #f59e0b; }
+  .perc-grid .cell.head { background: #1f3a50; border-color: #6b7280; }
+  .perc-grid .cell.on.head { background: #f59e0b; border-color: #fde68a; }
+
+  .footer {
+    font-size: 0.7rem;
+    color: #4b5563;
+    margin-top: 0.5rem;
+    text-align: center;
+  }
+
+  @media (max-width: 560px) {
+    .footer { font-size: 0.6rem; }
+  }
+
+  /* ── Share / collab bar ── */
+  .share-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.75rem;
+    color: #6b7280;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .share-bar a {
+    color: #818cf8;
+    text-decoration: none;
+    letter-spacing: 0.05em;
+    word-break: break-all; /* long URLs wrap on mobile */
+  }
+  .share-bar a:hover { color: #a5b4fc; }
+
+  .collab-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.7rem;
+    color: #6b7280;
+    white-space: nowrap;
+  }
+  .collab-indicator .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #374151;
+    flex-shrink: 0;
+  }
+  .collab-indicator.connected .dot { background: #10b981; }
+  .collab-indicator.connecting .dot { background: #f59e0b; }
+</style>
+
+<div
+  data-controller="sequencer"
+  data-sequencer-slug-value="<%= @song&.slug.to_s %>"
+  data-sequencer-state-value="<%= (@song&.state || {}).to_json %>">
+
+  <h1>Step Sequencer</h1>
+
+  <div class="controls">
+    <button data-sequencer-target="playBtn"
+            data-action="click->sequencer#togglePlay">PLAY</button>
+
+    <button class="clear-btn"
+            data-action="click->sequencer#clear">CLEAR</button>
+
+    <button class="add-kick-btn"
+            data-sequencer-target="addKickBtn"
+            data-action="click->sequencer#addKick">+ KICK</button>
+
+    <div class="control-group">
+      BPM <span class="val" data-sequencer-target="bpmVal">120</span>
+      <input type="range" min="40" max="240" value="120"
+             data-sequencer-target="bpmInput"
+             data-action="input->sequencer#changeBpm">
+    </div>
+
+    <div class="control-group">
+      Wave
+      <select data-sequencer-target="waveformSelect"
+              data-action="change->sequencer#changeWaveform">
+        <option value="sine">Sine</option>
+        <option value="triangle">Triangle</option>
+        <option value="square">Square</option>
+        <option value="sawtooth">Sawtooth</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      Decay <span class="val" data-sequencer-target="decayVal">0.4s</span>
+      <input type="range" min="0.05" max="3" step="0.05" value="0.4"
+             data-sequencer-target="decayInput"
+             data-action="input->sequencer#changeDecay">
+    </div>
+
+    <div class="control-group">
+      Reverb <span class="val" data-sequencer-target="reverbVal">20%</span>
+      <input type="range" min="0" max="100" value="20"
+             data-sequencer-target="reverbInput"
+             data-action="input->sequencer#changeReverb">
+    </div>
+
+    <div class="control-group">
+      Vol <span class="val" data-sequencer-target="volVal">-6</span>
+      <input type="range" min="-40" max="0" value="-6"
+             data-sequencer-target="volumeInput"
+             data-action="input->sequencer#changeVolume">
+    </div>
+  </div>
+
+  <div class="share-bar">
+    <span class="collab-indicator" data-sequencer-target="collabIndicator">
+      <span class="dot"></span>
+      <span data-sequencer-target="collabStatus">not connected</span>
+    </span>
+    <span data-sequencer-target="shareLink"></span>
+  </div>
+
+  <div class="sequencer-scroll">
+    <div class="sequencer">
+      <div class="note-labels" data-sequencer-target="noteLabels"></div>
+      <div class="grid-wrapper">
+        <div class="beat-markers" data-sequencer-target="beatMarkers"></div>
+        <div class="grid" data-sequencer-target="grid"></div>
+      </div>
+    </div>
+
+    <div class="perc-section" data-sequencer-target="percSection" style="display:none">
+      <div class="sequencer perc-sequencer">
+        <div class="note-labels">
+          <div class="note-label natural perc-label">KICK</div>
+        </div>
+        <div class="grid-wrapper">
+          <div class="grid perc-grid" data-sequencer-target="kickGrid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    click cells to toggle &nbsp;·&nbsp; rows = notes (B4 → C4) &nbsp;·&nbsp; columns = 16th-note steps
+  </div>
+</div>
