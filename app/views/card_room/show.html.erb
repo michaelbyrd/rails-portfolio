@@ -1,0 +1,46 @@
+<div
+  data-controller="card-room"
+  data-card-room-slug-value="<%= @table.slug %>"
+  data-card-room-max-seats-value="<%= @table.max_seats %>"
+  class="min-h-screen flex flex-col items-center justify-center p-4"
+>
+  <%# Name modal — always flex for centering; toggle only 'hidden' %>
+  <div data-card-room-target="nameModal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+    <div class="bg-gray-900 border border-gray-700 rounded-xl p-6 w-80">
+      <h2 class="text-lg font-semibold mb-4">Take a seat</h2>
+      <input
+        data-card-room-target="nameInput"
+        type="text" placeholder="Your name"
+        class="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 mb-4 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+        maxlength="16"
+      />
+      <div class="flex gap-2">
+        <button data-action="click->card-room#confirmJoin"
+          class="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 font-semibold">
+          Sit Down
+        </button>
+        <button data-action="click->card-room#cancelJoin"
+          class="flex-1 bg-gray-700 hover:bg-gray-600 text-white rounded-lg py-2">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <%# Table area — rendered by Stimulus %>
+  <div data-card-room-target="table" class="w-full max-w-2xl"></div>
+
+  <%# Action bar — shown when it's your turn %>
+  <div data-card-room-target="actionBar" class="hidden mt-4 w-full max-w-2xl bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 flex items-center gap-3">
+    <div data-card-room-target="actionInfo" class="text-sm text-gray-400 flex-1"></div>
+    <button data-action="click->card-room#fold"
+      class="bg-red-700 hover:bg-red-600 text-white rounded-lg px-4 py-2 text-sm font-semibold">Fold</button>
+    <button data-action="click->card-room#call"
+      data-card-room-target="callButton"
+      class="bg-gray-700 hover:bg-gray-600 text-white rounded-lg px-4 py-2 text-sm font-semibold"></button>
+    <input data-card-room-target="raiseInput" type="number" step="20"
+      class="w-24 bg-gray-800 border border-gray-600 rounded-lg px-2 py-2 text-white text-sm" />
+    <button data-action="click->card-room#raise"
+      class="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2 text-sm font-semibold">Raise</button>
+  </div>
+</div>
