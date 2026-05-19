@@ -16,7 +16,8 @@ module Games
       seat.merge!(
         'name' => name, 'stack' => STARTING_STACK, 'bet' => 0,
         'hole_cards' => [], 'status' => 'sitting_out',
-        'is_bot' => false, 'session_id' => session_id
+        'is_bot' => false, 'session_id' => session_id,
+        'joined_at' => Time.current.to_f
       )
       s
     end
@@ -51,8 +52,16 @@ module Games
       s = state.deep_dup
       deck = Games::Deck.new
 
-      # Activate sitting_out players
-      s['seats'].each { |st| st['status'] = 'active' if st['status'] == 'sitting_out' }
+      # Reset for new hand: bust out 0-stack players, activate everyone else
+      s['seats'].each do |st|
+        next if st['status'] == 'empty'
+        if st['stack'].to_i == 0
+          st.merge!('status' => 'empty', 'name' => nil, 'session_id' => nil,
+                    'is_bot' => false, 'hole_cards' => [], 'bet' => 0)
+        else
+          st['status'] = 'active'
+        end
+      end
 
       active_positions = active_seat_positions(s)
       dealer  = s['dealer_position']
@@ -84,7 +93,7 @@ module Games
         'community_cards'  => [],
         'deck'             => deck.to_a,
         'last_action'      => nil,
-        'players_to_act'   => active_positions.length - 1
+        'players_to_act'   => active_positions.length
       )
       s
     end

@@ -28,6 +28,20 @@ class Table < ApplicationRecord
     start_hand! if should_start?
   end
 
+  def reset!
+    self.state = {
+      'status' => 'waiting', 'street' => nil, 'hand_number' => 0,
+      'dealer_position' => 0, 'current_position' => nil, 'current_bet' => 0,
+      'min_raise' => 20, 'pot' => 0, 'players_to_act' => 0,
+      'community_cards' => [], 'deck' => [], 'last_action' => nil,
+      'seats' => Array.new(max_seats) { |i|
+        { 'position' => i, 'name' => nil, 'stack' => 0, 'bet' => 0,
+          'hole_cards' => [], 'status' => 'empty', 'is_bot' => false, 'session_id' => nil }
+      }
+    }
+    save!
+  end
+
   def start_hand!
     new_state = engine.deal_hand(state)
     update!(state: new_state)

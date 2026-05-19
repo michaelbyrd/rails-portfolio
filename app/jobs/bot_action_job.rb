@@ -15,6 +15,12 @@ class BotActionJob < ApplicationJob
     )
 
     table.reload
+
+    if table.state['street'] == 'hand_over'
+      NextHandJob.set(wait: 3.seconds).perform_later(table_slug)
+      return
+    end
+
     next_pos = table.state['current_position']
     return unless next_pos && table.state['status'] == 'playing'
 
