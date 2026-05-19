@@ -145,6 +145,17 @@ waiting
 any street ──(all but one fold)──► hand_over
 ```
 
+## NL Hold'em Defaults
+
+| Setting | Value |
+|---|---|
+| Starting stack | $1,000 |
+| Small blind | $10 |
+| Big blind | $20 |
+| Min raise | 2× current bet |
+
+These are constants for the initial implementation. Configurable per-table is a future concern.
+
 ## Testing
 
 - Unit tests on game engine: dealing, hand evaluation, bet validation, state transitions
