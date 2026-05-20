@@ -62,6 +62,33 @@ RSpec.describe Games::NlHoldem do
     end
   end
 
+  describe '.apply_action — dealer advancement' do
+    it 'advances the dealer when the hand ends at showdown' do
+      state = make_state(%w[Alice Bob])
+      state = described_class.deal_hand(state)
+      dealer_before = state['dealer_position']
+      20.times do
+        break if state['street'] == 'hand_over'
+        pos = state['current_position']
+        break unless pos
+        seat = state['seats'].find { |s| s['position'] == pos }
+        action = seat['bet'].to_i >= state['current_bet'].to_i ? 'check' : 'call'
+        state = described_class.apply_action(state, pos, { 'action' => action })
+      end
+      expect(state['dealer_position']).not_to eq dealer_before
+    end
+
+    it 'advances the dealer when the hand ends by a fold' do
+      state = make_state(%w[Alice Bob])
+      state = described_class.deal_hand(state)
+      dealer_before = state['dealer_position']
+      pos = state['current_position']
+      state = described_class.apply_action(state, pos, { 'action' => 'fold' })
+      expect(state['street']).to eq 'hand_over'
+      expect(state['dealer_position']).not_to eq dealer_before
+    end
+  end
+
   describe '.apply_action — hand_over cleanup' do
     it 'sets current_position to nil when the hand ends by fold' do
       state = make_state(%w[Alice Bob])

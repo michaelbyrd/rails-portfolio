@@ -203,7 +203,7 @@ module Games
       s['street']           = 'hand_over'
       s['current_position'] = nil
 
-      next_dealer = next_position(active_seat_positions(s), s['dealer_position'])
+      next_dealer = next_position(seated_positions(s), s['dealer_position'])
       s['dealer_position'] = next_dealer
       s
     end
@@ -216,7 +216,7 @@ module Games
       s['last_action']      = { 'player' => winner['name'], 'action' => 'wins' }
       s['street']           = 'hand_over'
       s['current_position'] = nil
-      next_dealer = next_position(active_seat_positions(s), s['dealer_position'])
+      next_dealer = next_position(seated_positions(s), s['dealer_position'])
       s['dealer_position'] = next_dealer
       s
     end
@@ -243,6 +243,10 @@ module Games
       active_seats(state).map { |s| s['position'] }.sort
     end
 
+    def self.seated_positions(state)
+      state['seats'].reject { |s| s['status'] == 'empty' }.map { |s| s['position'] }.sort
+    end
+
     def self.next_position(positions, current)
       idx = positions.index(current) || -1
       positions[(idx + 1) % positions.length]
@@ -265,7 +269,7 @@ module Games
     end
 
     private_class_method :advance_street, :resolve_showdown, :award_pot, :post_blind,
-                         :find_seat, :active_seats, :active_seat_positions,
+                         :find_seat, :active_seats, :active_seat_positions, :seated_positions,
                          :next_position, :rotate_after, :next_to_act, :first_to_act_post_flop
   end
 end
