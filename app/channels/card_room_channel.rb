@@ -6,6 +6,7 @@ class CardRoomChannel < ApplicationCable::Channel
     @table_slug = params[:slug]
     @session_id = params[:session_id]
     stream_from "card_room_#{@table_slug}"
+    stream_from "card_room_#{@table_slug}_#{@session_id}"
 
     transmit({ type: 'state_update', state: table.state_for(@session_id) })
   end
@@ -38,7 +39,7 @@ class CardRoomChannel < ApplicationCable::Channel
 
     ActionCable.server.broadcast(
       "card_room_#{@table_slug}",
-      { type: 'state_update', state: table.state }
+      { type: 'state_update', state: table.masked_state }
     )
   rescue => e
     transmit({ type: 'error', message: e.message, detail: e.class.name })
@@ -50,6 +51,7 @@ class CardRoomChannel < ApplicationCable::Channel
   def schedule_next_if_hand_over_or_trigger_bot(table)
     table.reload
     if table.state['street'] == 'hand_over'
+      Rails.logger.info "[CardRoom] ENQUEUE NextHandJob table=#{@table_slug}"
       NextHandJob.set(wait: 3.seconds).perform_later(@table_slug)
     else
       maybe_trigger_bot(table)
@@ -58,14 +60,26 @@ class CardRoomChannel < ApplicationCable::Channel
 
   def maybe_trigger_bot(table)
     table.reload
-    return unless table.state['status'] == 'playing'
-
+    status = table.state['status']
     current_pos = table.state['current_position']
-    return unless current_pos
+
+    unless status == 'playing'
+      Rails.logger.info "[CardRoom] maybe_trigger_bot SKIP status=#{status} table=#{@table_slug}"
+      return
+    end
+
+    unless current_pos
+      Rails.logger.info "[CardRoom] maybe_trigger_bot SKIP no current_position table=#{@table_slug}"
+      return
+    end
 
     current_seat = table.state['seats'].find { |s| s['position'] == current_pos }
-    return unless current_seat&.fetch('is_bot', false)
+    unless current_seat&.fetch('is_bot', false)
+      Rails.logger.info "[CardRoom] maybe_trigger_bot SKIP human at pos=#{current_pos} table=#{@table_slug}"
+      return
+    end
 
+    Rails.logger.info "[CardRoom] ENQUEUE BotActionJob table=#{@table_slug} pos=#{current_pos}"
     BotActionJob.set(wait: 1.5.seconds).perform_later(table.slug, current_pos)
   end
 end

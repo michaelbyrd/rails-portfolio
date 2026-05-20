@@ -47,6 +47,10 @@ class Table < ApplicationRecord
     update!(state: new_state)
   end
 
+  def masked_state
+    state_for(nil)
+  end
+
   def state_for(session_id)
     s = state.deep_dup
     s['seats'] = s['seats'].map do |seat|

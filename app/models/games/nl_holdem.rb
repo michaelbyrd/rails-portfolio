@@ -143,7 +143,8 @@ module Games
         seat['status']   = 'all_in' if seat['stack'] == 0
         s['last_action'] = { 'player' => seat['name'], 'action' => 'raise', 'amount' => amount }
         active_count     = active_seats(s).count { |st| st['status'] == 'active' }
-        s['players_to_act'] = active_count - 1
+        # If the raiser went all-in they're already excluded from active_count; don't subtract again
+        s['players_to_act'] = seat['status'] == 'all_in' ? active_count : active_count - 1
       end
 
       if s['players_to_act'].to_i <= 0
@@ -182,6 +183,8 @@ module Games
       first_pos = first_to_act_post_flop(s)
       s['current_position'] = first_pos
       s['players_to_act']   = active_seats(s).count { |st| st['status'] == 'active' }
+      # Everyone is all-in — run out the remaining streets automatically
+      return advance_street(s) if s['players_to_act'] == 0
       s
     end
 
@@ -195,9 +198,10 @@ module Games
       end
 
       winner['stack'] += s['pot']
-      s['pot']         = 0
-      s['last_action'] = { 'player' => winner['name'], 'action' => 'wins' }
-      s['street']      = 'hand_over'
+      s['pot']              = 0
+      s['last_action']      = { 'player' => winner['name'], 'action' => 'wins' }
+      s['street']           = 'hand_over'
+      s['current_position'] = nil
 
       next_dealer = next_position(active_seat_positions(s), s['dealer_position'])
       s['dealer_position'] = next_dealer
@@ -208,9 +212,10 @@ module Games
       s = state.deep_dup
       winner = find_seat(s, winner_position)
       winner['stack'] += s['pot']
-      s['pot']         = 0
-      s['last_action'] = { 'player' => winner['name'], 'action' => 'wins' }
-      s['street']      = 'hand_over'
+      s['pot']              = 0
+      s['last_action']      = { 'player' => winner['name'], 'action' => 'wins' }
+      s['street']           = 'hand_over'
+      s['current_position'] = nil
       next_dealer = next_position(active_seat_positions(s), s['dealer_position'])
       s['dealer_position'] = next_dealer
       s

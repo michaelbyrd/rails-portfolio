@@ -62,6 +62,32 @@ RSpec.describe Games::NlHoldem do
     end
   end
 
+  describe '.apply_action — hand_over cleanup' do
+    it 'sets current_position to nil when the hand ends by fold' do
+      state = make_state(%w[Alice Bob])
+      state = described_class.deal_hand(state)
+      pos = state['current_position']
+      new_state = described_class.apply_action(state, pos, { 'action' => 'fold' })
+      expect(new_state['street']).to eq 'hand_over'
+      expect(new_state['current_position']).to be_nil
+    end
+
+    it 'sets current_position to nil when the hand ends at showdown' do
+      state = make_state(%w[Alice Bob])
+      state = described_class.deal_hand(state)
+      20.times do
+        break if state['street'] == 'hand_over'
+        pos = state['current_position']
+        break unless pos
+        seat = state['seats'].find { |s| s['position'] == pos }
+        action = seat['bet'].to_i >= state['current_bet'].to_i ? 'check' : 'call'
+        state = described_class.apply_action(state, pos, { 'action' => action })
+      end
+      expect(state['street']).to eq 'hand_over'
+      expect(state['current_position']).to be_nil
+    end
+  end
+
   describe '.apply_action — fold' do
     it 'marks the seat as folded' do
       state = make_state(%w[Alice Bob])
@@ -142,6 +168,70 @@ RSpec.describe Games::NlHoldem do
       if state['street'] == 'flop'
         expect(state['community_cards'].length).to eq 3
       end
+    end
+
+    it 'does not advance the street when an all-in raiser still has opponents who must act' do
+      state = make_state(%w[Alice Bob])
+      state = described_class.deal_hand(state)
+      sb_pos = state['current_position']
+      state = described_class.apply_action(state, sb_pos, { 'action' => 'raise', 'amount' => 1000 })
+      expect(state['street']).to eq 'pre_flop'
+      expect(state['players_to_act']).to eq 1
+    end
+
+    it 'runs out all remaining streets when all players go all-in pre-flop' do
+      state = make_state(%w[Alice Bob])
+      state = described_class.deal_hand(state)
+      sb_pos = state['current_position']
+      bb_pos = state['seats'].find { |s| s['status'] == 'active' && s['position'] != sb_pos }.fetch('position')
+      state = described_class.apply_action(state, sb_pos, { 'action' => 'raise', 'amount' => 1000 })
+      state = described_class.apply_action(state, bb_pos, { 'action' => 'call' })
+      expect(state['street']).to eq 'hand_over'
+    end
+
+    it 'plays a full hand to hand_over when players check through every street' do
+      state = make_state(%w[Alice Bob])
+      state = described_class.deal_hand(state)
+      20.times do
+        break if state['street'] == 'hand_over'
+        pos = state['current_position']
+        break unless pos
+        seat = state['seats'].find { |s| s['position'] == pos }
+        action = seat['bet'].to_i >= state['current_bet'].to_i ? 'check' : 'call'
+        state = described_class.apply_action(state, pos, { 'action' => action })
+      end
+      expect(state['street']).to eq 'hand_over'
+    end
+
+    it 'awards the full pot to the winner' do
+      state = make_state(%w[Alice Bob])
+      state = described_class.deal_hand(state)
+      total_chips = state['seats'].sum { |s| s['stack'] } + state['pot'].to_i
+      20.times do
+        break if state['street'] == 'hand_over'
+        pos = state['current_position']
+        break unless pos
+        seat = state['seats'].find { |s| s['position'] == pos }
+        action = seat['bet'].to_i >= state['current_bet'].to_i ? 'check' : 'call'
+        state = described_class.apply_action(state, pos, { 'action' => action })
+      end
+      expect(state['pot']).to eq 0
+      expect(state['seats'].sum { |s| s['stack'] }).to eq total_chips
+    end
+
+    it 'advances dealer position after hand_over' do
+      state = make_state(%w[Alice Bob])
+      state = described_class.deal_hand(state)
+      dealer_before = state['dealer_position']
+      20.times do
+        break if state['street'] == 'hand_over'
+        pos = state['current_position']
+        break unless pos
+        seat = state['seats'].find { |s| s['position'] == pos }
+        action = seat['bet'].to_i >= state['current_bet'].to_i ? 'check' : 'call'
+        state = described_class.apply_action(state, pos, { 'action' => action })
+      end
+      expect(state['dealer_position']).not_to eq dealer_before
     end
   end
 

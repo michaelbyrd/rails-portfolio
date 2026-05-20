@@ -76,4 +76,24 @@ RSpec.describe Table, type: :model do
       expect(table.reload.state['seats'][2]['is_bot']).to be true
     end
   end
+
+  describe '#masked_state' do
+    it 'replaces hole cards of all seated players with ["??", "??"]' do
+      table = create(:table)
+      table.join_seat(0, 'Alice', 'sid1')
+      table.join_seat(1, 'Bob', 'sid2')
+      table.reload
+      occupied = table.masked_state['seats'].reject { |s| s['status'] == 'empty' }
+      occupied.each do |seat|
+        expect(seat['hole_cards']).to eq(%w[?? ??])
+      end
+    end
+
+    it 'leaves empty seats with empty hole_cards' do
+      table = create(:table)
+      table.masked_state['seats'].each do |seat|
+        expect(seat['hole_cards']).to eq([])
+      end
+    end
+  end
 end
