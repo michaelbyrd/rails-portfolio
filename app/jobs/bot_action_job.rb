@@ -32,10 +32,7 @@ class BotActionJob < ApplicationJob
     next_pos = table.state['current_position']
     Rails.logger.info "[BotJob] DONE slug=#{table_slug} pos=#{position} -> street=#{street} next_pos=#{next_pos}"
 
-    ActionCable.server.broadcast(
-      "card_room_#{table_slug}",
-      { type: 'state_update', state: table.masked_state }
-    )
+    table.broadcast_to_all
 
     if street == 'hand_over'
       Rails.logger.info "[BotJob] ENQUEUE NextHandJob slug=#{table_slug}"
@@ -48,7 +45,7 @@ class BotActionJob < ApplicationJob
     next_seat = table.state['seats'].find { |s| s['position'] == next_pos }
     if next_seat&.fetch('is_bot', false)
       Rails.logger.info "[BotJob] CHAIN -> slug=#{table_slug} next_pos=#{next_pos}"
-      BotActionJob.set(wait: 1.5.seconds).perform_later(table_slug, next_pos)
+      BotActionJob.set(wait: 0.5.seconds).perform_later(table_slug, next_pos)
     end
   rescue Games::NlHoldem::InvalidActionError => e
     Rails.logger.warn "[BotJob] RACE_SKIP slug=#{table_slug} pos=#{position} #{e.message}"

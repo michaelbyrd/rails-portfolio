@@ -37,10 +37,7 @@ class CardRoomChannel < ApplicationCable::Channel
       table.reset!
     end
 
-    ActionCable.server.broadcast(
-      "card_room_#{@table_slug}",
-      { type: 'state_update', state: table.masked_state }
-    )
+    table.broadcast_to_all
   rescue => e
     transmit({ type: 'error', message: e.message, detail: e.class.name })
     Rails.logger.error "[CardRoom] receive error: #{e.class}: #{e.message}\n#{e.backtrace.first(5).join("\n")}"
@@ -80,6 +77,6 @@ class CardRoomChannel < ApplicationCable::Channel
     end
 
     Rails.logger.info "[CardRoom] ENQUEUE BotActionJob table=#{@table_slug} pos=#{current_pos}"
-    BotActionJob.set(wait: 1.5.seconds).perform_later(table.slug, current_pos)
+    BotActionJob.set(wait: 0.5.seconds).perform_later(table.slug, current_pos)
   end
 end

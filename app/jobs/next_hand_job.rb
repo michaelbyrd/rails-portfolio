@@ -37,17 +37,6 @@ class NextHandJob < ApplicationJob
       table.update!(state: new_state)
     end
 
-    ActionCable.server.broadcast(
-      "card_room_#{table_slug}",
-      { type: 'state_update', state: table.masked_state }
-    )
-
-    table.state['seats'].each do |seat|
-      next if seat['session_id'].nil? || seat['is_bot']
-      ActionCable.server.broadcast(
-        "card_room_#{table_slug}_#{seat['session_id']}",
-        { type: 'state_update', state: table.state_for(seat['session_id']) }
-      )
-    end
+    table.broadcast_to_all
   end
 end

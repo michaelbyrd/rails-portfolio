@@ -37,13 +37,17 @@
   </div>
 
   <%# Action bar — shown when it's your turn %>
-  <div data-card-room-target="actionBar" style="display:none" class="mt-4 w-full max-w-2xl bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 flex items-center gap-3">
+  <div data-card-room-target="actionBar" style="visibility:hidden" class="mt-4 w-full max-w-2xl bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 flex items-center gap-3">
     <div data-card-room-target="actionInfo" class="text-sm text-gray-400 flex-1"></div>
     <button data-action="click->card-room#fold"
       class="bg-red-700 hover:bg-red-600 text-white rounded-lg px-4 py-2 text-sm font-semibold">Fold</button>
     <button data-action="click->card-room#call"
       data-card-room-target="callButton"
       class="bg-gray-700 hover:bg-gray-600 text-white rounded-lg px-4 py-2 text-sm font-semibold"></button>
+    <button data-action="click->card-room#potBet"
+      class="border border-purple-500 text-purple-300 hover:bg-purple-900 rounded-lg px-3 py-2 text-xs font-semibold tracking-wide transition-colors">Pot</button>
+    <button data-action="click->card-room#allIn"
+      class="border border-orange-500 text-orange-300 hover:bg-orange-900 rounded-lg px-3 py-2 text-xs font-semibold tracking-wide transition-colors">All In</button>
     <input data-card-room-target="raiseInput" type="number" step="20"
       class="w-24 bg-gray-800 border border-gray-600 rounded-lg px-2 py-2 text-white text-sm" />
     <button data-action="click->card-room#raise"

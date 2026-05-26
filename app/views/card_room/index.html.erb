@@ -1,23 +1,211 @@
-<div class="max-w-2xl mx-auto py-16 px-4">
-  <h1 class="text-3xl font-bold mb-2">Card Room</h1>
-  <p class="text-gray-400 mb-8">No Limit Hold'em</p>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
-  <div class="space-y-3">
-    <% @tables.each do |table| %>
-      <% seated = table.state['seats'].reject { |s| s['status'] == 'empty' }.count %>
-      <a href="<%= card_room_table_path(table.slug) %>"
-         class="flex items-center justify-between bg-gray-900 border border-gray-800 rounded-xl px-5 py-4 hover:border-blue-500 transition-colors">
-        <div>
-          <div class="font-semibold text-lg"><%= table.name %></div>
-          <div class="text-sm text-gray-400"><%= seated %>/<%= table.max_seats %> seats taken</div>
-        </div>
-        <div class="flex items-center gap-3">
-          <span class="text-sm <%= table.state['status'] == 'playing' ? 'text-green-400' : 'text-gray-500' %>">
-            <%= table.state['status'] == 'playing' ? 'Hand in progress' : 'Waiting' %>
-          </span>
-          <span class="text-gray-600">→</span>
-        </div>
-      </a>
-    <% end %>
+  body {
+    background: #e8b4a0 !important;
+    color: #0d0f1a;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+
+  .cardroom-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5rem 1.5rem;
+  }
+
+  .cardroom-inner {
+    width: 100%;
+    max-width: 560px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 2.5rem;
+  }
+
+  .section-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 1rem;
+    border: 1.5px solid #0d0f1a;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #0d0f1a;
+  }
+
+  .cardroom-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .cardroom-heading h1 {
+    font-size: 2.6rem;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: #0d0f1a;
+  }
+
+  .cardroom-heading p {
+    font-size: 1rem;
+    font-weight: 400;
+    color: #6b6e84;
+    line-height: 1.6;
+  }
+
+  .card-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    background: #ededf6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+  }
+
+  .card-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #0d0f1a;
+    margin-bottom: 0.4rem;
+  }
+
+  .card-desc {
+    font-size: 0.85rem;
+    color: #6b6e84;
+    line-height: 1.55;
+  }
+
+  .card-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-top: 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #5858c8;
+  }
+
+  .tables-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    text-align: left;
+  }
+
+  .tables-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #9b9db8;
+  }
+
+  .table-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .table-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: #ffffff;
+    border: 1.5px solid #e2e2ec;
+    border-radius: 12px;
+    text-decoration: none;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+  }
+
+  .table-row:hover {
+    box-shadow: 0 4px 16px rgba(80, 80, 140, 0.1);
+    transform: translateY(-1px);
+  }
+
+  .table-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #0d0f1a;
+  }
+
+  .table-seats {
+    font-size: 0.75rem;
+    color: #9b9db8;
+    margin-top: 0.15rem;
+  }
+
+  .table-status-playing {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #22c55e;
+  }
+
+  .table-status-waiting {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #9b9db8;
+  }
+
+  .table-arrow {
+    font-size: 0.85rem;
+    color: #5858c8;
+    margin-left: 0.5rem;
+  }
+
+  .back-link {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #9b9db8;
+    text-decoration: none;
+    letter-spacing: 0.02em;
+  }
+  .back-link:hover { color: #5858c8; }
+</style>
+
+<div class="cardroom-page">
+  <div class="cardroom-inner">
+
+    <div class="section-badge"># card room</div>
+
+    <div class="cardroom-heading">
+      <h1>Sit down and<br>play some cards.</h1>
+      <p>Multiplayer No-Limit Hold'em. <br>Add bots, play live over WebSockets.</p>
+    </div>
+
+    <div class="tables-section">
+      <div class="tables-label">Tables</div>
+      <div class="table-list">
+        <% @tables.each do |table| %>
+          <% seated = table.state['seats'].reject { |s| s['status'] == 'empty' }.count %>
+          <%= link_to card_room_table_path(table.slug), class: "table-row" do %>
+            <div>
+              <div class="table-name"><%= table.name %></div>
+              <div class="table-seats"><%= seated %>/<%= table.max_seats %> seats taken</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.5rem">
+              <span class="<%= table.state['status'] == 'playing' ? 'table-status-playing' : 'table-status-waiting' %>">
+                <%= table.state['status'] == 'playing' ? 'Hand in progress' : 'Waiting' %>
+              </span>
+              <span class="table-arrow">→</span>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+
+    <%= link_to '← Back', root_path, class: 'back-link' %>
+
   </div>
 </div>

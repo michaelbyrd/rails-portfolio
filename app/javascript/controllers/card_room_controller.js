@@ -169,7 +169,6 @@ export default class extends Controller {
     const posStyle   = SEAT_POSITIONS_6[visualPos] || SEAT_POSITIONS_6[0]
     const isMe       = seat.position === myPos
     const isActive   = state.current_position === seat.position
-    const atShowdown = state.street === 'showdown' || state.street === 'hand_over'
     const borderColor = isMe ? '#3b82f6' : isActive ? '#4ade80' : '#374151'
 
     if (seat.status === 'empty') {
@@ -188,9 +187,11 @@ export default class extends Controller {
       `
     }
 
-    // Only show hole cards for own seat, or at showdown for surviving players
-    const cards  = isMe ? (seat.hole_cards || []) :
-                   (atShowdown && seat.status === 'active') ? (seat.hole_cards || []) : []
+    // True showdown = hand_over with multiple active/all-in players (vs. a fold win with one survivor)
+    const activeSeatCount = state.seats.filter(s => s.status === 'active' || s.status === 'all_in').length
+    const isTrueShowdown  = state.street === 'hand_over' && activeSeatCount > 1
+    const cards = isMe ? (seat.hole_cards || []) :
+                  (isTrueShowdown && (seat.status === 'active' || seat.status === 'all_in')) ? (seat.hole_cards || []) : []
     const folded = seat.status === 'folded'
 
     return `
@@ -224,22 +225,39 @@ export default class extends Controller {
     `
   }
 
+  potBet() {
+    const s        = this.state
+    const myPos    = this.myPosition()
+    const mySeat   = s.seats.find(seat => seat.position === myPos)
+    const allIn    = (mySeat?.stack || 0) + (mySeat?.bet || 0)
+    const minRaise = (s.current_bet || 0) + (s.min_raise || 20)
+    this.raiseInputTarget.value = Math.min(Math.max(s.pot || 0, minRaise), allIn)
+  }
+
+  allIn() {
+    const myPos  = this.myPosition()
+    const mySeat = this.state.seats.find(seat => seat.position === myPos)
+    this.raiseInputTarget.value = (mySeat?.stack || 0) + (mySeat?.bet || 0)
+  }
+
   renderActionBar() {
     const s     = this.state
     const myPos = this.myPosition()
     const isMyTurn = s.current_position === myPos && s.status === 'playing'
 
-    this.actionBarTarget.style.display = isMyTurn ? 'flex' : 'none'
+    this.actionBarTarget.style.visibility = isMyTurn ? 'visible' : 'hidden'
     if (!isMyTurn) return
 
     const mySeat   = s.seats.find(seat => seat.position === myPos)
     const toCall   = (s.current_bet || 0) - (mySeat?.bet || 0)
     const minRaise = (s.current_bet || 0) + (s.min_raise || 20)
+    const allIn    = (mySeat?.stack || 0) + (mySeat?.bet || 0)
 
     this.actionInfoTarget.textContent = toCall > 0 ? `To call: $${toCall}` : 'Your action'
     this.callButtonTarget.textContent = toCall > 0 ? `Call $${toCall}` : 'Check'
     this.raiseInputTarget.value       = minRaise
     this.raiseInputTarget.min         = minRaise
+    this.raiseInputTarget.max         = allIn
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────────

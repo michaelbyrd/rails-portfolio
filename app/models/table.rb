@@ -47,14 +47,32 @@ class Table < ApplicationRecord
     update!(state: new_state)
   end
 
+  def broadcast_to_all
+    ActionCable.server.broadcast(
+      "card_room_#{slug}",
+      { type: 'state_update', state: masked_state }
+    )
+    state['seats'].each do |seat|
+      next if seat['session_id'].nil? || seat['is_bot']
+      ActionCable.server.broadcast(
+        "card_room_#{slug}_#{seat['session_id']}",
+        { type: 'state_update', state: state_for(seat['session_id']) }
+      )
+    end
+  end
+
   def masked_state
     state_for(nil)
   end
 
   def state_for(session_id)
     s = state.deep_dup
+    at_showdown = s['street'] == 'hand_over' &&
+      s['seats'].count { |st| %w[active all_in].include?(st['status']) } > 1
     s['seats'] = s['seats'].map do |seat|
       if seat['session_id'] == session_id
+        seat
+      elsif at_showdown && %w[active all_in].include?(seat['status'])
         seat
       else
         seat.merge('hole_cards' => seat['hole_cards'].any? ? ['??', '??'] : [])
